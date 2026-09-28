@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run tests
+        run: |
+          python -m unittest discover tests -v
+      - name: CLI smoke — healthy fixture must pass
+        run: |
+          python ald.py liveness --file examples/tasks.sample.json; code=$?; echo "exit=$code"
+          if [ "$code" -ne 2 ]; then echo "expected exit 2 (sample contains dead critical jobs)"; exit 1; fi
+      - name: CLI smoke — tool failure must never exit 0
+        run: |
+          python ald.py liveness --file missing.json; code=$?; echo "exit=$code"
+          if [ "$code" -eq 0 ]; then echo "scanner crashed but exited 0 — unacceptable"; exit 1; fi
+      - name: CLI smoke — threads ledger roundtrip
+        run: |
+          python ald.py threads --path /tmp/lt.jsonl add --to a@x.com --subject smoke --sent 2026-09-01 --expect-days 5
+          python ald.py threads --path /tmp/lt.jsonl verify; code=$?; echo "exit=$code"
+          if [ "$code" -ne 0 ]; then echo "clean ledger failed verify"; exit 1; fi
+      - name: CRLF guard (index must be LF)
+        run: |
+          bad=$(git ls-files --eol | awk '$1 != "i/lf" && $1 != "i/none" {print $2, $4}')
+          if [ -n "$bad" ]; then echo "CRLF in index: $bad"; exit 1; fi
