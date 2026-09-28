@@ -39,7 +39,7 @@ import json
 import os
 import sqlite3
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 EXIT_OK, EXIT_PAUSED, EXIT_CRITICAL, EXIT_FAIL = 0, 1, 2, 3
 
@@ -82,7 +82,10 @@ def _norm_ts(v):
     if n > 10_000_000_000:  # epoch ms
         n /= 1000.0
     try:
-        return datetime.fromtimestamp(n).strftime("%Y-%m-%d %H:%M")
+        # Fixed UTC (not local tz): identical output on dev box and CI —
+        # first CI run failed exactly because local-time rendering is
+        # machine-dependent. Epoch timestamps render in UTC.
+        return datetime.fromtimestamp(n, tz=timezone.utc).strftime("%Y-%m-%d %H:%M")
     except (OverflowError, OSError, ValueError):
         return None
 

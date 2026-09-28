@@ -39,8 +39,9 @@ class TestClean(unittest.TestCase):
 
     def test_t2_epoch_ms_normalizes(self):
         tasks = liveness.load("generic-json", write_tasks(tempfile.mkdtemp(), GOOD))
-        # 1758901800000 ms = 1758901800 s = 2025-09-26 23:50 (UTC+8 local)
-        self.assertEqual(tasks[1]["last_run"], "2025-09-26 23:50")
+        # 1758901800 s = 2025-09-26 15:50 UTC (tool renders epoch in fixed UTC,
+        # not local tz — first CI run failed on local-time rendering)
+        self.assertEqual(tasks[1]["last_run"], "2025-09-26 15:50")
 
 
 class TestMutation(unittest.TestCase):

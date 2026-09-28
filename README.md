@@ -123,8 +123,7 @@ never a root cause. Walk the layers — at least one will be broken:
 - **No daemon, no UI.** This is a scan you run (cron it, CI it, or hook it
   into your agent's boot sequence). It reports; *you* decide. It will never
   auto-restart your jobs — bulk restarts hide the root cause.
-- **Windows/local-time nuance.** Epoch timestamps render in your local
-  timezone; ISO strings render as-is.
+- **Windows/local-time nuance.** Epoch timestamps render in **fixed UTC** (identical on every machine — the first CI run caught a local-time bug here); ISO strings render as-is.
 
 ## Tests & CI
 
