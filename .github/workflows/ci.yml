@@ -21,14 +21,17 @@ jobs:
           python -m unittest discover tests -v
       - name: CLI smoke — healthy fixture must pass
         run: |
+          set +e  # bash -e would abort on the scanner's intentional exit 2 before we can capture it
           python ald.py liveness --file examples/tasks.sample.json; code=$?; echo "exit=$code"
           if [ "$code" -ne 2 ]; then echo "expected exit 2 (sample contains dead critical jobs)"; exit 1; fi
       - name: CLI smoke — tool failure must never exit 0
         run: |
+          set +e  # scanner is expected to exit non-zero here; capture it instead of dying
           python ald.py liveness --file missing.json; code=$?; echo "exit=$code"
           if [ "$code" -eq 0 ]; then echo "scanner crashed but exited 0 — unacceptable"; exit 1; fi
       - name: CLI smoke — threads ledger roundtrip
         run: |
+          set +e
           python ald.py threads --path /tmp/lt.jsonl add --to a@x.com --subject smoke --sent 2026-09-01 --expect-days 5
           python ald.py threads --path /tmp/lt.jsonl verify; code=$?; echo "exit=$code"
           if [ "$code" -ne 0 ]; then echo "clean ledger failed verify"; exit 1; fi
